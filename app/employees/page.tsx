@@ -2,11 +2,11 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
+import { mockStore } from '@/app/lib/mock-store';
+
 async function getEmployees() {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/employees`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    return res.json();
+    // Directly fetch from store instead of making HTTP request to self
+    return mockStore.getAllEmployeeStats();
 }
 
 export default async function EmployeesPage() {
