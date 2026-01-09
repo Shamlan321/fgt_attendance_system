@@ -1,0 +1,11 @@
+# Copy this to .env.local and fill in with your Vercel Postgres details
+POSTGRES_URL="postgres://default:password@ep-host.region.postgres.vercel-storage.com:5432/verceldb"
+POSTGRES_PRISMA_URL="postgres://default:password@ep-host.region.postgres.vercel-storage.com:5432/verceldb?pgbouncer=true&connect_timeout=15"
+POSTGRES_URL_NON_POOLING="postgres://default:password@ep-host.region.postgres.vercel-storage.com:5432/verceldb"
+POSTGRES_USER="default"
+POSTGRES_HOST="ep-host.region.postgres.vercel-storage.com"
+POSTGRES_PASSWORD="password"
+POSTGRES_DATABASE="verceldb"
+
+# API Key for the Sync Script
+API_SECRET_KEY="secret_key_123"
