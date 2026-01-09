@@ -1,9 +1,9 @@
-import { mockStore } from '@/app/lib/mock-store';
+import { fetchEmployees } from '@/app/lib/data';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
     try {
-        const employees = mockStore.getAllEmployeeStats();
+        const employees = await fetchEmployees();
         return NextResponse.json(employees);
     } catch (error) {
         console.error('Error fetching employees:', error);

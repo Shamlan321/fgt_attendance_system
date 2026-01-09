@@ -2,11 +2,10 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
-import { mockStore } from '@/app/lib/mock-store';
+import { fetchEmployees } from '@/app/lib/data';
 
 async function getEmployees() {
-    // Directly fetch from store instead of making HTTP request to self
-    return mockStore.getAllEmployeeStats();
+    return await fetchEmployees();
 }
 
 export default async function EmployeesPage() {

@@ -1,4 +1,4 @@
-import { mockStore } from '@/app/lib/mock-store';
+import { fetchLogs } from '@/app/lib/data';
 import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 
@@ -13,24 +13,24 @@ export async function GET(request: Request) {
         let filename;
 
         if (type === 'custom' && startDate && endDate) {
-            logs = mockStore.getLogs(startDate, endDate);
+            logs = await fetchLogs(startDate, endDate);
             filename = `attendance_${startDate}_to_${endDate}.xlsx`;
         } else if (type === 'today') {
             const today = new Date().toISOString().split('T')[0];
-            logs = mockStore.getLogs(today, today);
+            logs = await fetchLogs(today, today);
             filename = `attendance_${today}.xlsx`;
         } else if (type === 'week') {
             const { getWeekDates } = await import('@/app/lib/utils');
             const { start, end } = getWeekDates();
-            logs = mockStore.getLogs(start, end);
+            logs = await fetchLogs(start, end);
             filename = `attendance_week_${start}_to_${end}.xlsx`;
         } else if (type === 'month') {
             const { getMonthDates } = await import('@/app/lib/utils');
             const { start, end } = getMonthDates();
-            logs = mockStore.getLogs(start, end);
+            logs = await fetchLogs(start, end);
             filename = `attendance_month_${start}_to_${end}.xlsx`;
         } else {
-            logs = mockStore.getLogs();
+            logs = await fetchLogs();
             filename = 'attendance_all.xlsx';
         }
 

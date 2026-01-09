@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { mockStore } from '@/app/lib/mock-store';
+import { fetchEmployeeStats, fetchEmployeeLogs } from '@/app/lib/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,8 +11,8 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
     const { name } = await params;
     const employeeName = decodeURIComponent(name);
 
-    const stats = mockStore.getEmployeeStats(employeeName);
-    const logs = mockStore.getEmployeeLogs(employeeName);
+    const stats = await fetchEmployeeStats(employeeName);
+    const logs = await fetchEmployeeLogs(employeeName);
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 pb-20">
