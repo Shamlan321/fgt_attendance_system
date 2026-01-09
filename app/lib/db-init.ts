@@ -1,8 +1,9 @@
 import { sql } from '@vercel/postgres';
 
 export async function createTables() {
-    try {
-        await sql`
+  try {
+    await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+    await sql`
       CREATE TABLE IF NOT EXISTS attendance_logs (
         id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -11,9 +12,9 @@ export async function createTables() {
         synced_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `;
-        console.log('Created "attendance_logs" table');
-    } catch (error) {
-        console.error('Error creating tables:', error);
-        throw error;
-    }
+    console.log('Created "attendance_logs" table');
+  } catch (error) {
+    console.error('Error creating tables:', error);
+    throw error;
+  }
 }
