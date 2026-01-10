@@ -2,6 +2,7 @@ import { sql } from '@vercel/postgres';
 import { AttendanceLog } from './definitions';
 import { unstable_noStore as noStore } from 'next/cache';
 import { mockStore, EmployeeStats } from './mock-store';
+import { getTodayPST } from './utils';
 
 export { type EmployeeStats };
 
@@ -32,14 +33,14 @@ export async function fetchStats() {
 
     if (!process.env.POSTGRES_URL) {
         const logs = mockStore.getLogs();
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayPST();
         const todayLogs = logs.filter(log => log.date === today);
         const uniqueNames = new Set(todayLogs.map(l => l.name)).size;
         return { todayValues: uniqueNames, totalEntries: logs.length };
     }
 
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayPST();
 
         const countPromise = sql`
       SELECT COUNT(DISTINCT name) as count 
@@ -69,11 +70,12 @@ export async function fetchEmployees(): Promise<EmployeeStats[]> {
     }
 
     try {
+        const today = getTodayPST();
         const employees = await sql`
       SELECT 
         name,
         COUNT(*) as total_days,
-        COUNT(CASE WHEN date = TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') THEN 1 END) as is_present,
+        COUNT(CASE WHEN date = ${today} THEN 1 END) as is_present,
         MAX(synced_at) as last_check_in
       FROM attendance_logs
       GROUP BY name
@@ -111,10 +113,11 @@ export async function fetchEmployeeStats(name: string): Promise<EmployeeStats> {
     }
 
     try {
+        const today = getTodayPST();
         const stats = await sql`
             SELECT 
                 COUNT(*) as total_days,
-                COUNT(CASE WHEN date = TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') THEN 1 END) as is_present
+                COUNT(CASE WHEN date = ${today} THEN 1 END) as is_present
             FROM attendance_logs
             WHERE name = ${name}
         `;

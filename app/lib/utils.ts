@@ -30,3 +30,10 @@ export function getMonthDates(date: Date = new Date()): { start: string; end: st
         end: lastDay.toISOString().split('T')[0]
     };
 }
+
+export function getTodayPST(): string {
+    // Asia/Karachi is UTC+5
+    return new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Karachi'
+    });
+}

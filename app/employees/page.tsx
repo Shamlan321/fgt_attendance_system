@@ -15,8 +15,18 @@ export default async function EmployeesPage() {
         <main className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 pb-20">
             {/* Header */}
             <div className="bg-white shadow-sm p-6 sticky top-0 z-10">
-                <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
-                <p className="text-sm text-gray-500">Manage and track employee attendance</p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
+                        <p className="text-sm text-gray-500">Manage and track employee attendance</p>
+                    </div>
+                    <Link
+                        href="/employees/add"
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+                    >
+                        + Add Employee
+                    </Link>
+                </div>
             </div>
 
             <div className="p-4 space-y-4 max-w-md mx-auto">

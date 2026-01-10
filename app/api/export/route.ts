@@ -16,7 +16,8 @@ export async function GET(request: Request) {
             logs = await fetchLogs(startDate, endDate);
             filename = `attendance_${startDate}_to_${endDate}.xlsx`;
         } else if (type === 'today') {
-            const today = new Date().toISOString().split('T')[0];
+            const { getTodayPST } = await import('@/app/lib/utils');
+            const today = getTodayPST();
             logs = await fetchLogs(today, today);
             filename = `attendance_${today}.xlsx`;
         } else if (type === 'week') {
