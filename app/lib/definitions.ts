@@ -3,7 +3,8 @@ export type AttendanceLog = {
   name: string;
   date: string;
   time: string;
-  synced_at: Date;
+  type?: 'check_in' | 'check_out'; // New field
+  synced_at: string;
 };
 
 export type Employee = {

@@ -47,27 +47,23 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
+                        <p className="text-gray-500 text-xs font-medium mb-1">Overtime</p>
+                        <p className="text-3xl font-bold text-purple-600">{stats.overtimeHours || 0}</p>
+                        <p className="text-xs text-gray-400 mt-1">Hours</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
+                        <p className="text-gray-500 text-xs font-medium mb-1">Late Arrivals</p>
+                        <p className="text-3xl font-bold text-orange-600">{stats.lateArrivals || 0}</p>
+                        <p className="text-xs text-gray-400 mt-1">Days</p>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
                         <p className="text-gray-500 text-xs font-medium mb-1">Present Days</p>
-                        <p className="text-3xl font-bold text-green-600">{stats.presentDays}</p>
-                        <p className="text-xs text-gray-400 mt-1">This month</p>
+                        <p className="text-2xl font-bold text-green-600">{stats.presentDays}</p>
                     </div>
                     <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100">
                         <p className="text-gray-500 text-xs font-medium mb-1">Absent Days</p>
-                        <p className="text-3xl font-bold text-red-600">{stats.absentDays}</p>
-                        <p className="text-xs text-gray-400 mt-1">This month</p>
-                    </div>
-                    <div className="bg-white rounded-xl p-4 shadow-md border border-gray-100 col-span-2">
-                        <p className="text-gray-500 text-xs font-medium mb-1">Attendance Rate</p>
-                        <div className="flex items-end gap-2">
-                            <p className="text-4xl font-bold text-blue-600">{stats.attendancePercentage}%</p>
-                            <p className="text-sm text-gray-400 mb-1">of {stats.totalDays} days</p>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
-                            <div
-                                className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all"
-                                style={{ width: `${stats.attendancePercentage}%` }}
-                            ></div>
-                        </div>
+                        <p className="text-2xl font-bold text-red-600">{stats.absentDays}</p>
                     </div>
                 </div>
 
@@ -87,10 +83,12 @@ export default async function EmployeeDetailPage({ params }: PageProps) {
                                     <div key={log.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
                                         <div>
                                             <p className="font-semibold text-gray-900">{log.date}</p>
-                                            <p className="text-xs text-gray-500">Check-in time</p>
+                                            <p className={`text-xs uppercase font-bold ${log.type === 'check_out' ? 'text-red-500' : 'text-green-500'}`}>
+                                                {log.type ? log.type.replace('_', ' ') : 'Check In'}
+                                            </p>
                                         </div>
                                         <div className="text-right">
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${log.type === 'check_out' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                                                 {log.time}
                                             </span>
                                         </div>

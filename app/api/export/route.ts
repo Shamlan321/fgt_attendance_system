@@ -35,20 +35,19 @@ export async function GET(request: Request) {
             filename = 'attendance_all.xlsx';
         }
 
-        // Create worksheet data
-        const wsData = [
-            ['Name', 'Date', 'Time', 'Synced At'],
-            ...logs.map(log => [
-                log.name,
-                log.date,
-                log.time,
-                new Date(log.synced_at).toLocaleString()
-            ])
-        ];
+        // Create worksheet
+        const ws = XLSX.utils.json_to_sheet(
+            logs.map((log: any) => ({
+                Name: log.name,
+                Date: log.date,
+                Time: log.time,
+                Type: log.type ? log.type.replace('_', ' ').toUpperCase() : 'CHECK IN',
+                'Synced At': new Date(log.synced_at).toLocaleString()
+            }))
+        );
 
-        // Create workbook and worksheet
+        // Create workbook
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
 
         // Set column widths
         ws['!cols'] = [

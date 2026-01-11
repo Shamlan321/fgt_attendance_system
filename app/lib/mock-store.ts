@@ -13,8 +13,10 @@ export interface EmployeeStats {
     presentDays: number;
     absentDays: number;
     attendancePercentage: number;
-    lastCheckIn?: Date;
+    lastCheckIn?: Date | string;
     isPresent: boolean;
+    overtimeHours?: number;
+    lateArrivals?: number;
 }
 
 class MockStore {
@@ -22,21 +24,23 @@ class MockStore {
 
     constructor() {
         this.logs = [
-            { id: '1', name: 'John Doe', date: '2024-01-09', time: '09:00:00', synced_at: new Date() },
+            { id: '1', name: 'John Doe', date: '2023-10-26', time: '09:00:00', type: 'check_in', synced_at: new Date().toISOString() },
+            { id: '2', name: 'Jane Smith', date: '2023-10-26', time: '09:15:00', type: 'check_in', synced_at: new Date().toISOString() },
+            { id: '3', name: 'John Doe', date: '2023-10-25', time: '08:55:00', type: 'check_in', synced_at: new Date().toISOString() },
         ];
     }
 
-    public addLog(entry: Omit<AttendanceLog, 'id' | 'synced_at'>) {
+    addLog(log: Omit<AttendanceLog, 'id' | 'synced_at'>) {
         const newLog: AttendanceLog = {
-            ...entry,
-            id: Math.random().toString(36).substring(7),
-            synced_at: new Date(),
+            ...log,
+            id: crypto.randomUUID(),
+            synced_at: new Date().toISOString(),
         };
         this.logs.unshift(newLog);
         return newLog;
     }
 
-    public getLogs(startDate?: string, endDate?: string): AttendanceLog[] {
+    getLogs(startDate?: string, endDate?: string): AttendanceLog[] {
         if (!startDate && !endDate) return this.logs;
 
         return this.logs.filter(log => {
@@ -76,13 +80,21 @@ class MockStore {
         const absentDays = totalDays - presentDays;
         const attendancePercentage = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
 
+        // Find the latest check-in time for the employee within the filtered logs
+        let latestCheckIn: Date | undefined;
+        if (employeeLogs.length > 0) {
+            // Sort logs by synced_at in descending order to easily get the latest
+            const sortedLogs = [...employeeLogs].sort((a, b) => new Date(b.synced_at).getTime() - new Date(a.synced_at).getTime());
+            latestCheckIn = new Date(sortedLogs[0].synced_at);
+        }
+
         return {
             name,
             totalDays,
             presentDays,
             absentDays,
             attendancePercentage: Math.round(attendancePercentage * 10) / 10,
-            lastCheckIn: employeeLogs[0]?.synced_at,
+            lastCheckIn: latestCheckIn,
             isPresent
         };
     }

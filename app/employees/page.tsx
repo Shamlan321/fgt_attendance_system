@@ -63,7 +63,7 @@ export default async function EmployeesPage() {
                                         <div>
                                             <p className="font-semibold text-gray-900">{emp.name}</p>
                                             <p className="text-xs text-gray-500">
-                                                {emp.presentDays} days this month
+                                                {emp.presentDays} days | {emp.overtimeHours || 0}hr OT | {emp.lateArrivals || 0} Late
                                             </p>
                                         </div>
                                     </div>

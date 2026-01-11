@@ -10,22 +10,25 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, date, time } = body;
+        const { name, date, time, type } = body;
+
+        // Default type to 'check_in' if not provided (for older clients)
+        const logType = type || 'check_in';
 
         if (!name || !date || !time) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-            console.log(`[MOCK DB] Inserted attendance: ${name}, ${date}, ${time}`);
-            mockStore.addLog({ name, date, time });
+            console.log(`[MOCK DB] Inserted attendance: ${name}, ${date}, ${time}, ${logType}`);
+            mockStore.addLog({ name, date, time, type: logType });
             return NextResponse.json({ success: true, mock: true }, { status: 200 });
         }
 
         // Insert into Supabase
         const { error } = await supabase
             .from('attendance_logs')
-            .insert([{ name, date, time }]);
+            .insert([{ name, date, time, type: logType }]);
 
         if (error) {
             console.error('Supabase error:', error);
