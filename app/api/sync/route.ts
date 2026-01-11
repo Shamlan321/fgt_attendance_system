@@ -1,5 +1,5 @@
-import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
+import { supabase } from '@/app/lib/supabase';
 import { mockStore } from '@/app/lib/mock-store';
 
 export async function POST(request: Request) {
@@ -16,18 +16,21 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        if (!process.env.POSTGRES_URL) {
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
             console.log(`[MOCK DB] Inserted attendance: ${name}, ${date}, ${time}`);
             mockStore.addLog({ name, date, time });
             return NextResponse.json({ success: true, mock: true }, { status: 200 });
         }
 
-        // Insert into database
-        // Note: We use textual date/time to match the python script's output, but could convert to timestamp
-        await sql`
-      INSERT INTO attendance_logs (name, date, time)
-      VALUES (${name}, ${date}, ${time})
-    `;
+        // Insert into Supabase
+        const { error } = await supabase
+            .from('attendance_logs')
+            .insert([{ name, date, time }]);
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return NextResponse.json({ error: 'Database error' }, { status: 500 });
+        }
 
         return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {

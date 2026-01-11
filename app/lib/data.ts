@@ -1,27 +1,30 @@
-import { sql } from '@vercel/postgres';
 import { AttendanceLog } from './definitions';
 import { unstable_noStore as noStore } from 'next/cache';
 import { mockStore, EmployeeStats } from './mock-store';
 import { getTodayPST } from './utils';
+import { supabase } from './supabase';
 
 export { type EmployeeStats };
 
 export async function fetchLatestAttendance() {
     noStore();
 
-    // Return mock data if no DB connection
-    if (!process.env.POSTGRES_URL) {
+    // Return mock data if no Supabase connection
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         console.log('Using mock store for attendance logs');
         return mockStore.getLogs();
     }
 
     try {
-        const data = await sql<AttendanceLog>`
-      SELECT * FROM attendance_logs 
-      ORDER BY date DESC, time DESC 
-      LIMIT 20
-    `;
-        return data.rows;
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .select('*')
+            .order('date', { ascending: false })
+            .order('time', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+        return data || [];
     } catch (error) {
         console.error('Database Error:', error);
         return [];
@@ -31,7 +34,7 @@ export async function fetchLatestAttendance() {
 export async function fetchStats() {
     noStore();
 
-    if (!process.env.POSTGRES_URL) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         const logs = mockStore.getLogs();
         const today = getTodayPST();
         const todayLogs = logs.filter(log => log.date === today);
@@ -42,19 +45,26 @@ export async function fetchStats() {
     try {
         const today = getTodayPST();
 
-        const countPromise = sql`
-      SELECT COUNT(DISTINCT name) as count 
-      FROM attendance_logs 
-      WHERE date = ${today}
-    `;
+        // Count distinct names for today
+        const { data: todayData, error: todayError } = await supabase
+            .from('attendance_logs')
+            .select('name')
+            .eq('date', today);
 
-        const totalPromise = sql`SELECT COUNT(*) as count FROM attendance_logs`;
+        if (todayError) throw todayError;
 
-        const [todayCount, totalCount] = await Promise.all([countPromise, totalPromise]);
+        const uniqueNames = new Set(todayData?.map(log => log.name) || []).size;
+
+        // Count total entries
+        const { count: totalCount, error: totalError } = await supabase
+            .from('attendance_logs')
+            .select('*', { count: 'exact', head: true });
+
+        if (totalError) throw totalError;
 
         return {
-            todayValues: Number(todayCount.rows[0].count),
-            totalEntries: Number(totalCount.rows[0].count)
+            todayValues: uniqueNames,
+            totalEntries: totalCount || 0
         };
     } catch (error) {
         console.error('Database Error:', error);
@@ -65,40 +75,60 @@ export async function fetchStats() {
 export async function fetchEmployees(): Promise<EmployeeStats[]> {
     noStore();
 
-    if (!process.env.POSTGRES_URL) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         return mockStore.getAllEmployeeStats();
     }
 
     try {
         const today = getTodayPST();
-        const employees = await sql`
-      SELECT 
-        name,
-        COUNT(*) as total_days,
-        COUNT(CASE WHEN date = ${today} THEN 1 END) as is_present,
-        MAX(synced_at) as last_check_in
-      FROM attendance_logs
-      GROUP BY name
-      ORDER BY name ASC
-    `;
 
-        return employees.rows.map(row => {
-            const totalDays = Number(row.total_days);
-            // Determine absent days based on work days in month (approximate for MVP)
-            const currentDay = new Date().getDate();
-            const absentDays = Math.max(0, currentDay - totalDays); // Simple heuristic
-            const attendancePercentage = (totalDays / currentDay) * 100;
+        // Fetch all attendance logs
+        const { data: logs, error } = await supabase
+            .from('attendance_logs')
+            .select('name, date, synced_at');
+
+        if (error) throw error;
+        if (!logs || logs.length === 0) return [];
+
+        // Group by employee name
+        const employeeMap = new Map<string, any>();
+
+        logs.forEach(log => {
+            if (!employeeMap.has(log.name)) {
+                employeeMap.set(log.name, {
+                    name: log.name,
+                    totalDays: 0,
+                    isPresent: false,
+                    lastCheckIn: log.synced_at
+                });
+            }
+
+            const emp = employeeMap.get(log.name);
+            emp.totalDays++;
+            if (log.date === today) {
+                emp.isPresent = true;
+            }
+            if (new Date(log.synced_at) > new Date(emp.lastCheckIn)) {
+                emp.lastCheckIn = log.synced_at;
+            }
+        });
+
+        // Calculate stats
+        const currentDay = new Date().getDate();
+        return Array.from(employeeMap.values()).map(emp => {
+            const absentDays = Math.max(0, currentDay - emp.totalDays);
+            const attendancePercentage = (emp.totalDays / currentDay) * 100;
 
             return {
-                name: row.name,
-                totalDays,
-                presentDays: totalDays, // For now assuming 1 entry per day
+                name: emp.name,
+                totalDays: emp.totalDays,
+                presentDays: emp.totalDays,
                 absentDays,
                 attendancePercentage: Math.round(attendancePercentage * 10) / 10,
-                lastCheckIn: row.last_check_in,
-                isPresent: Number(row.is_present) > 0
+                lastCheckIn: emp.lastCheckIn,
+                isPresent: emp.isPresent
             };
-        });
+        }).sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
         console.error('Database Error:', error);
         return [];
@@ -108,22 +138,22 @@ export async function fetchEmployees(): Promise<EmployeeStats[]> {
 export async function fetchEmployeeStats(name: string): Promise<EmployeeStats> {
     noStore();
 
-    if (!process.env.POSTGRES_URL) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
         return mockStore.getEmployeeStats(name);
     }
 
     try {
         const today = getTodayPST();
-        const stats = await sql`
-            SELECT 
-                COUNT(*) as total_days,
-                COUNT(CASE WHEN date = ${today} THEN 1 END) as is_present
-            FROM attendance_logs
-            WHERE name = ${name}
-        `;
 
-        const row = stats.rows[0];
-        const totalDays = Number(row.total_days);
+        const { data: logs, error } = await supabase
+            .from('attendance_logs')
+            .select('date')
+            .eq('name', name);
+
+        if (error) throw error;
+
+        const totalDays = logs?.length || 0;
+        const isPresent = logs?.some(log => log.date === today) || false;
         const currentDay = new Date().getDate();
         const absentDays = Math.max(0, currentDay - totalDays);
         const attendancePercentage = currentDay > 0 ? (totalDays / currentDay) * 100 : 0;
@@ -134,7 +164,7 @@ export async function fetchEmployeeStats(name: string): Promise<EmployeeStats> {
             presentDays: totalDays,
             absentDays,
             attendancePercentage: Math.round(attendancePercentage * 10) / 10,
-            isPresent: Number(row.is_present) > 0
+            isPresent
         };
     } catch (error) {
         console.error('Database Error:', error);
@@ -144,41 +174,53 @@ export async function fetchEmployeeStats(name: string): Promise<EmployeeStats> {
 
 export async function fetchEmployeeLogs(name: string): Promise<AttendanceLog[]> {
     noStore();
-    if (!process.env.POSTGRES_URL) return mockStore.getEmployeeLogs(name);
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        return mockStore.getEmployeeLogs(name);
+    }
 
     try {
-        const logs = await sql<AttendanceLog>`
-            SELECT * FROM attendance_logs 
-            WHERE name = ${name}
-            ORDER BY date DESC, time DESC
-        `;
-        return logs.rows;
+        const { data, error } = await supabase
+            .from('attendance_logs')
+            .select('*')
+            .eq('name', name)
+            .order('date', { ascending: false })
+            .order('time', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
     } catch (error) {
+        console.error('Database Error:', error);
         return [];
     }
 }
 
 export async function fetchLogs(startDate?: string, endDate?: string): Promise<AttendanceLog[]> {
     noStore();
-    if (!process.env.POSTGRES_URL) return mockStore.getLogs(startDate, endDate);
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+        return mockStore.getLogs(startDate, endDate);
+    }
 
     try {
-        let query;
+        let query = supabase
+            .from('attendance_logs')
+            .select('*');
+
         if (startDate && endDate) {
-            query = sql<AttendanceLog>`
-                SELECT * FROM attendance_logs 
-                WHERE date >= ${startDate} AND date <= ${endDate}
-                ORDER BY date DESC, time DESC
-            `;
-        } else {
-            query = sql<AttendanceLog>`
-                SELECT * FROM attendance_logs 
-                ORDER BY date DESC, time DESC
-            `;
+            query = query
+                .gte('date', startDate)
+                .lte('date', endDate);
         }
 
-        const logs = await query;
-        return logs.rows;
+        query = query
+            .order('date', { ascending: false })
+            .order('time', { ascending: false });
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        return data || [];
     } catch (error) {
         console.error('Database Error:', error);
         return [];

@@ -1,15 +1,11 @@
-# Copy this to .env.local and fill in with your Vercel Postgres details
-POSTGRES_URL="postgres://default:password@ep-host.region.postgres.vercel-storage.com:5432/verceldb"
-POSTGRES_PRISMA_URL="postgres://default:password@ep-host.region.postgres.vercel-storage.com:5432/verceldb?pgbouncer=true&connect_timeout=15"
-POSTGRES_URL_NON_POOLING="postgres://default:password@ep-host.region.postgres.vercel-storage.com:5432/verceldb"
-POSTGRES_USER="default"
-POSTGRES_HOST="ep-host.region.postgres.vercel-storage.com"
-POSTGRES_PASSWORD="password"
-POSTGRES_DATABASE="verceldb"
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://wzhtnculzdqayeqvgvwy.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_nENv-hdKBQcDws1e0C_iPg_N1hYuHns
 
 # API Secret Key for authentication
-API_SECRET_KEY="secret_key_123"
+API_SECRET_KEY=secret_key_123
 
 # Python Server URL (local IP of attendance PC)
 # Example: http://192.168.1.100:5000
-PYTHON_SERVER_URL="http://localhost:5000"
+PYTHON_SERVER_URL=http://localhost:5000
+
