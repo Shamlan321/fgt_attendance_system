@@ -12,6 +12,7 @@ import threading
 import time
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
+from tkcalendar import Calendar
 from PIL import Image, ImageTk
 import json
 
@@ -561,10 +562,73 @@ class AttendanceSystem:
         self.log("Opening App Directory...")
 
     def trigger_report_ui(self):
-        """Ask for date range before generating report"""
-        start = simpledialog.askstring("Report", "Start Date (YYYY-MM-DD) or leave blank:")
-        end = simpledialog.askstring("Report", "End Date (YYYY-MM-DD) or leave blank:")
-        self.log(self.calculate_stats(start, end))
+        """Ask for date range with embedded calendar widgets"""
+        dialog = tk.Toplevel()
+        dialog.title("Report Date Range")
+        dialog.geometry("650x450")
+        dialog.configure(bg="#ffffff")
+        
+        # Header
+        tk.Label(dialog, text="Select Report Period", 
+                font=("Segoe UI", 16, "bold"), bg="#ffffff", fg="#0f3460").pack(pady=15)
+        
+        # Main Container
+        main_frame = tk.Frame(dialog, bg="#ffffff")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+        
+        # Start Date Section
+        start_frame = tk.Frame(main_frame, bg="#ffffff")
+        start_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
+        
+        tk.Label(start_frame, text="Start Date", font=("Segoe UI", 12, "bold"), 
+                bg="#ffffff", fg="#3b82f6").pack(pady=5)
+        
+        start_cal = Calendar(start_frame, selectmode='day', 
+                            year=datetime.now().year, month=datetime.now().month, day=datetime.now().day,
+                            background="#3b82f6", foreground='white', bordercolor="#3b82f6",
+                            headersbackground="#3b82f6", headersforeground='white',
+                            selectbackground="#1d4ed8", selectforeground='white',
+                            font=("Segoe UI", 9))
+        start_cal.pack(pady=5)
+        
+        # End Date Section
+        end_frame = tk.Frame(main_frame, bg="#ffffff")
+        end_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
+        
+        tk.Label(end_frame, text="End Date", font=("Segoe UI", 12, "bold"), 
+                bg="#ffffff", fg="#3b82f6").pack(pady=5)
+        
+        end_cal = Calendar(end_frame, selectmode='day', 
+                          year=datetime.now().year, month=datetime.now().month, day=datetime.now().day,
+                          background="#3b82f6", foreground='white', bordercolor="#3b82f6",
+                          headersbackground="#3b82f6", headersforeground='white',
+                          selectbackground="#1d4ed8", selectforeground='white',
+                          font=("Segoe UI", 9))
+        end_cal.pack(pady=5)
+        
+        def generate():
+            start = start_cal.get_date()
+            # Calendar returns M/D/YY or similar depending on locale, ensure YYYY-MM-DD
+            try:
+                start_dt = datetime.strptime(start, '%m/%d/%y')
+                start = start_dt.strftime('%Y-%m-%d')
+                
+                end = end_cal.get_date()
+                end_dt = datetime.strptime(end, '%m/%d/%y')
+                end = end_dt.strftime('%Y-%m-%d')
+            except:
+                pass # If format differs, trust string or handle accordingly
+
+            dialog.destroy()
+            self.log(self.calculate_stats(start, end))
+        
+        # Buttons
+        btn_frame = tk.Frame(dialog, bg="#ffffff")
+        btn_frame.pack(pady=20, fill=tk.X)
+        
+        tk.Button(btn_frame, text="Generate Report", command=generate, 
+                 bg="#8b5cf6", fg="white", font=("Segoe UI", 11, "bold"), 
+                 relief=tk.FLAT, cursor="hand2", height=2, width=20).pack(pady=5)
 
     def trigger_registration(self):
         name = simpledialog.askstring("Register", "Enter Employee Name:")
@@ -719,75 +783,136 @@ class AttendanceSystem:
         tk.Button(dialog, text="Save Rates", command=save_rate, bg="#4CAF50", fg="white", width=15).pack(pady=20)
 
     def generate_salary_sheet(self):
-        """Generate salary sheet for a date range"""
-        start_date = simpledialog.askstring("Salary Sheet", "Start Date (YYYY-MM-DD):")
-        end_date = simpledialog.askstring("Salary Sheet", "End Date (YYYY-MM-DD):")
+        """Generate salary sheet for a date range with embedded calendar widgets"""
+        dialog = tk.Toplevel()
+        dialog.title("Salary Date Range")
+        dialog.geometry("650x450")
+        dialog.configure(bg="#ffffff")
         
-        if not start_date or not end_date:
-            return
+        # Header
+        tk.Label(dialog, text="Select Salary Period", 
+                font=("Segoe UI", 16, "bold"), bg="#ffffff", fg="#0f3460").pack(pady=15)
         
-        try:
-            # Read attendance and rates
-            att_df = pd.read_excel(self.attendance_file)
-            rates_df = pd.read_excel(self.rates_file)
-            
-            # Filter by date range
-            att_df = att_df[(att_df['Date'] >= start_date) & (att_df['Date'] <= end_date)]
-            
-            if att_df.empty:
-                messagebox.showwarning("No Data", "No attendance records in this range.")
+        # Main Container
+        main_frame = tk.Frame(dialog, bg="#ffffff")
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20)
+        
+        # Start Date Section
+        start_frame = tk.Frame(main_frame, bg="#ffffff")
+        start_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
+        
+        tk.Label(start_frame, text="Start Date", font=("Segoe UI", 12, "bold"), 
+                bg="#ffffff", fg="#14b8a6").pack(pady=5)
+        
+        start_cal = Calendar(start_frame, selectmode='day', 
+                            year=datetime.now().year, month=datetime.now().month, day=datetime.now().day,
+                            background="#14b8a6", foreground='white', bordercolor="#14b8a6",
+                            headersbackground="#14b8a6", headersforeground='white',
+                            selectbackground="#0f766e", selectforeground='white',
+                            font=("Segoe UI", 9))
+        start_cal.pack(pady=5)
+        
+        # End Date Section
+        end_frame = tk.Frame(main_frame, bg="#ffffff")
+        end_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
+        
+        tk.Label(end_frame, text="End Date", font=("Segoe UI", 12, "bold"), 
+                bg="#ffffff", fg="#14b8a6").pack(pady=5)
+        
+        end_cal = Calendar(end_frame, selectmode='day', 
+                          year=datetime.now().year, month=datetime.now().month, day=datetime.now().day,
+                          background="#14b8a6", foreground='white', bordercolor="#14b8a6",
+                          headersbackground="#14b8a6", headersforeground='white',
+                          selectbackground="#0f766e", selectforeground='white',
+                          font=("Segoe UI", 9))
+        end_cal.pack(pady=5)
+        
+        def generate():
+            try:
+                # Convert Locale Date to ISO
+                start = start_cal.get_date()
+                start_dt = datetime.strptime(start, '%m/%d/%y')
+                start_date = start_dt.strftime('%Y-%m-%d')
+                
+                end = end_cal.get_date()
+                end_dt = datetime.strptime(end, '%m/%d/%y')
+                end_date = end_dt.strftime('%Y-%m-%d')
+            except:
+                self.log("Date format error. Please check your system locale.")
                 return
+
+            dialog.destroy()
             
-            # Calculate salaries
-            salary_data = []
-            for name in att_df['Name'].unique():
-                emp_data = att_df[att_df['Name'] == name]
-                total_hours = emp_data['Hours'].sum()
-                total_ot = emp_data['Overtime'].sum()
+            try:
+                # Read attendance and rates
+                att_df = pd.read_excel(self.attendance_file)
+                rates_df = pd.read_excel(self.rates_file)
                 
-                # Get rates
-                rate_row = rates_df[rates_df['Name'] == name]
-                if rate_row.empty:
-                    self.log(f"No rate set for {name}, skipping...")
-                    continue
+                # Filter by date range
+                att_df = att_df[(att_df['Date'] >= start_date) & (att_df['Date'] <= end_date)]
                 
-                hourly_rate = rate_row.iloc[0]['Hourly_Rate']
-                ot_rate = rate_row.iloc[0]['Overtime_Rate']
-                if pd.isna(ot_rate):
-                    ot_rate = hourly_rate
+                if att_df.empty:
+                    messagebox.showwarning("No Data", "No attendance records in this range.")
+                    return
                 
-                # Calculate pay
-                regular_pay = (total_hours - total_ot) * hourly_rate
-                ot_pay = total_ot * ot_rate
-                total_pay = regular_pay + ot_pay
+                # Calculate salaries
+                salary_data = []
+                for name in att_df['Name'].unique():
+                    emp_data = att_df[att_df['Name'] == name]
+                    total_hours = emp_data['Hours'].sum()
+                    total_ot = emp_data['Overtime'].sum()
+                    
+                    # Get rates
+                    rate_row = rates_df[rates_df['Name'] == name]
+                    if rate_row.empty:
+                        self.log(f"No rate set for {name}, skipping...")
+                        continue
+                    
+                    hourly_rate = rate_row.iloc[0]['Hourly_Rate']
+                    ot_rate = rate_row.iloc[0]['Overtime_Rate']
+                    if pd.isna(ot_rate):
+                        ot_rate = hourly_rate
+                    
+                    # Calculate pay
+                    regular_pay = (total_hours - total_ot) * hourly_rate
+                    ot_pay = total_ot * ot_rate
+                    total_pay = regular_pay + ot_pay
+                    
+                    salary_data.append({
+                        'Employee': name,
+                        'Total Hours': round(total_hours, 2),
+                        'Regular Hours': round(total_hours - total_ot, 2),
+                        'Overtime Hours': round(total_ot, 2),
+                        'Hourly Rate': hourly_rate,
+                        'OT Rate': ot_rate,
+                        'Regular Pay': round(regular_pay, 2),
+                        'Overtime Pay': round(ot_pay, 2),
+                        'Total Pay': round(total_pay, 2)
+                    })
                 
-                salary_data.append({
-                    'Employee': name,
-                    'Total Hours': round(total_hours, 2),
-                    'Regular Hours': round(total_hours - total_ot, 2),
-                    'Overtime Hours': round(total_ot, 2),
-                    'Hourly Rate': hourly_rate,
-                    'OT Rate': ot_rate,
-                    'Regular Pay': round(regular_pay, 2),
-                    'Overtime Pay': round(ot_pay, 2),
-                    'Total Pay': round(total_pay, 2)
-                })
-            
-            if not salary_data:
-                messagebox.showwarning("Error", "No employees with rates found.")
-                return
-            
-            # Save salary sheet
-            salary_df = pd.DataFrame(salary_data)
-            filename = f"salary_sheet_{start_date}_to_{end_date}.xlsx"
-            salary_df.to_excel(filename, index=False)
-            
-            self.log(f"Salary sheet generated: {filename}")
-            messagebox.showinfo("Success", f"Salary sheet saved:\n{filename}")
-            
-        except Exception as e:
-            self.log(f"Salary generation error: {e}")
-            messagebox.showerror("Error", f"Failed to generate salary sheet:\n{e}")
+                if not salary_data:
+                    messagebox.showwarning("Error", "No employees with rates found.")
+                    return
+                
+                # Save salary sheet
+                salary_df = pd.DataFrame(salary_data)
+                filename = f"salary_sheet_{start_date}_to_{end_date}.xlsx"
+                salary_df.to_excel(filename, index=False)
+                
+                self.log(f"Salary sheet generated: {filename}")
+                messagebox.showinfo("Success", f"Salary sheet saved:\n{filename}")
+                
+            except Exception as e:
+                self.log(f"Salary generation error: {e}")
+                messagebox.showerror("Error", f"Failed to generate salary sheet:\n{e}")
+        
+        # Buttons
+        btn_frame = tk.Frame(dialog, bg="#ffffff")
+        btn_frame.pack(pady=20, fill=tk.X)
+        
+        tk.Button(btn_frame, text="Generate Sheet", command=generate, 
+                 bg="#14b8a6", fg="white", font=("Segoe UI", 11, "bold"), 
+                 relief=tk.FLAT, cursor="hand2", height=2, width=20).pack(pady=5)
 
     def open_settings(self, root):
         settings_win = tk.Toplevel(root)
@@ -912,7 +1037,7 @@ class AttendanceApp:
         instruction_frame = tk.Frame(center_panel, bg="#16213e", height=50)
         instruction_frame.pack(fill=tk.X)
         tk.Label(instruction_frame, text="Press SPACEBAR to mark attendance", 
-                font=("Segoe UI", 11), bg="#16213e", fg="#94a3b8").pack(pady=12)
+                font=("Segoe UI", 11, "bold"), bg="#16213e", fg="#fbbf24").pack(pady=12)
         
         # ========== RIGHT PANEL: Control Panel ==========
         right_panel = tk.Frame(main_container, bg="#0f3460", width=320)
