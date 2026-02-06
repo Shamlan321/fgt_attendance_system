@@ -1,0 +1,7 @@
+{
+    "standard_check_in": "09:00",
+    "standard_check_out": "17:00",
+    "overtime_threshold": 1.0,
+    "cooldown_minutes": 10,
+    "enable_cooldown": false
+}
